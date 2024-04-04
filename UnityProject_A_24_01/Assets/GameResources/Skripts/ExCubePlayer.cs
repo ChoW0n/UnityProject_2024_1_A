@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
+using Unity.Loading;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -49,8 +50,20 @@ public class ExCubePlayer : MonoBehaviour
 
     private void OnCollisionEnter(Collision collision) // 충돌이 되었을때
     {
-        //Debug.Log(collision.gameObject.name);
-        Point = 0;
-        gameObject.transform.position = Vector3.zero; // 플레이어를 원점으로 되돌린다.
+        Debug.Log(collision.gameObject.tag);
+        if(collision.gameObject.tag == "Pipe")
+        {
+            Point = 0;
+            gameObject.transform.position = Vector3.zero; // 플레이어를 원점으로 되돌린다.
+        }
+        
+    }
+    private void OnTriggerEnter(Collider other)  //trigger 통한 충돌
+    {
+        if (other.gameObject.tag == "items") // 설정한 Tag로 Items와 충돌 했을 때
+        {
+            Point += 10; // point 10점을 올려준다.
+            Destroy(other.gameObject); //해당 오브젝트를 파괴 시켜준다.  
+        }
     }
 }
