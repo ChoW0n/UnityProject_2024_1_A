@@ -26,7 +26,7 @@ public class ExCubePlayer : MonoBehaviour
         if(checkEndTime <= 0)
         {
             PlayerPrefs.SetInt("Point", Point);
-            SceneManager.LoadScene("MainScene");
+            SceneManager.LoadScene("ResultScene");
         }
 
         checkTime += Time.deltaTime; // 시간을 누적해서 쌓는다 checkTime -> 0초, 1초, 0초, 1초
