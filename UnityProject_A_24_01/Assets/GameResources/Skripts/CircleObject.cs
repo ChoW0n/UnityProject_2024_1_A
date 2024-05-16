@@ -1,3 +1,4 @@
+using JetBrains.Annotations;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -7,7 +8,16 @@ public class CircleObject : MonoBehaviour
     public bool isDrag; //드레그 체크
     public bool isUsed; //사용 완료 체크
     Rigidbody2D rigidbody2D;    //2D 강체 선언
-    // Start is called before the first frame update
+
+    public int index;       //과인 번호 설정
+                            // Start is called before the first frame update
+
+    void Awake()
+    {
+        rigidbody2D = GetComponent<Rigidbody2D>(); 
+        isUsed = false;
+        rigidbody2D.simulated = false;
+    }
     void Start()
     {
         isUsed = false;                       //시작할때 사용이 안되었다고 입력
@@ -56,6 +66,41 @@ public class CircleObject : MonoBehaviour
         if (temp != null)
         {
             temp.gameObject.GetComponent<GameManager>().GenObject();        //GameManager 의 GenObject 함수를 호출
+        }
+    }
+
+    public void Used()
+    {
+        isDrag = false ;
+        isUsed = true;
+        rigidbody2D.simulated=true;
+    }
+
+    public void OnCollisionEnter2D(Collision2D collision)       //해당 오브젝트가 충돌 했을 때 OnCollisionEnter2D
+    {
+        if (index >= 7)
+            return;
+
+        if (collision.gameObject.tag == "Fruit")
+        {
+            CircleObject temp = collision.gameObject.GetComponent<CircleObject>();      //충돌한 물체에서 같은 Class를 받아온다.
+
+            if (temp.index == index)            //충돌 index와 내 index 가 같다.
+            {
+                if (gameObject.GetInstanceID() > collision.gameObject.GetInstanceID())  //2개 합쳐서 1개를 만들기 위해서 ID 검사 후 큰것만
+                {
+                    //GameManager에서 합친 오브젝트를 생성
+                    GameObject tempGameManager = GameObject.FindWithTag("GameManager");
+                    if (tempGameManager != null)
+                    {
+                        tempGameManager.gameObject.GetComponent<GameManager>().MergeObject(index, gameObject.transform.position);
+                    }
+                    
+                    
+                    Destroy(temp.gameObject);       //충돌한 물체 제거
+                    Destroy(gameObject);            //자신도 제거
+                }
+            }
         }
     }
 }
