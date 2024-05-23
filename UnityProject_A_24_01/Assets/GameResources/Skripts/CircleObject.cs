@@ -10,20 +10,23 @@ public class CircleObject : MonoBehaviour
     Rigidbody2D rigidbody2D;    //2D 강체 선언
 
     public int index;       //과인 번호 설정
-                            // Start is called before the first frame update
+
+    public float EndTime = 0.0f;        //종료 선 시간 체크 변수(float)
+    public SpriteRenderer spriteRenderer;   //종료시 스프라이트 색을 변환 시키기 위해서 접근 선언
+
+    public GameManager gameManager;     //게임 매니저 참조용
 
     void Awake()
     {
-        rigidbody2D = GetComponent<Rigidbody2D>(); 
-        isUsed = false;
+        rigidbody2D = GetComponent<Rigidbody2D>(); //오브젝트 강체에 접근
+        isUsed = false; //시작할때 사용이 안되었다고 입력
         rigidbody2D.simulated = false;
+
+        spriteRenderer = GetComponent<SpriteRenderer>();    //오브젝트에 붙어있는 컴포넌트에 접근
     }
     void Start()
     {
-        isUsed = false;                       //시작할때 사용이 안되었다고 입력
-        rigidbody2D = GetComponent<Rigidbody2D>(); //오브젝트 강체에 접근ㄱ
-        rigidbody2D.simulated = false;
-        
+        gameManager = GameObject.FindWithTag("GameManager").GetComponent<GameManager>();    //게임 매니저를 얻어온다.
     }
 
     // Update is called once per frame
@@ -41,7 +44,7 @@ public class CircleObject : MonoBehaviour
             if(mousePos.x < leftBorder) mousePos.x = leftBorder;    //마우스 위치가 이동 제한 한 곳 이상, 이하로 가면 값을 조절해서 가둔다.
             if(mousePos.x > rightBorder) mousePos.x = rightBorder;
 
-            mousePos.y = 4;                                         //오브젝트 Y 축 값 고정
+            mousePos.y = 5;                                         //오브젝트 Y 축 값 고정
             mousePos.z = 0;                                         //오브젝트 Z 축 값 고정
             transform.position = Vector3.Lerp(transform.position, mousePos, 0.2f);  //이 오브젝트를 마우스 위치로 리니어하게 0.2 값만큼씩 이동시켜 따라간다.
         }
@@ -62,11 +65,7 @@ public class CircleObject : MonoBehaviour
         isUsed = true;  //사용 완료 되었다. (true)
         rigidbody2D.simulated = true;   //물리 시뮬레이션 사용함 (true)
 
-        GameObject temp = GameObject.FindWithTag("GameManager");            //Scene에서 GameManager Tag 가지고 있는 오브젝트를 가져온다.
-        if (temp != null)
-        {
-            temp.gameObject.GetComponent<GameManager>().GenObject();        //GameManager 의 GenObject 함수를 호출
-        }
+        gameManager.GenObject();
     }
 
     public void Used()
@@ -74,6 +73,34 @@ public class CircleObject : MonoBehaviour
         isDrag = false ;
         isUsed = true;
         rigidbody2D.simulated=true;
+    }
+
+    public void OnTriggerStay2D(Collider2D collision)   //Trigger에 있을때
+    {
+        if(collision.tag == "EndLine")              //충돌중인 물체의 Tag가 EndLine 일 경우
+        {
+            EndTime += Time.deltaTime;              // 프레임 시간만큼 누적 시켜서 초를 카운트 한다.
+            
+            if(EndTime > 1 )         //1초 이상일 경우
+            {
+                spriteRenderer.color = new Color(0.9f, 0.2f, 0.2f);     //빨간색 처리
+            }
+
+            if(EndTime > 3)             //3초 이상 일 경우
+            {
+                //Debug.Log("게임 종료");     //우선 게임 종료 처리
+                gameManager.EndGame();
+            }
+        }
+    }
+
+    public void OnTriggerExit2D(Collider2D collision)       //Trigger에서 나올떄
+    {
+        if (collision.tag == "EndLine")                     //충돌중인 물체의 Tag가 EndLine일 경우
+        {
+            EndTime = 0.0f;
+            spriteRenderer.color = Color.white;             //기본 색상으로 변경
+        }
     }
 
     public void OnCollisionEnter2D(Collision2D collision)       //해당 오브젝트가 충돌 했을 때 OnCollisionEnter2D
@@ -90,11 +117,7 @@ public class CircleObject : MonoBehaviour
                 if (gameObject.GetInstanceID() > collision.gameObject.GetInstanceID())  //2개 합쳐서 1개를 만들기 위해서 ID 검사 후 큰것만
                 {
                     //GameManager에서 합친 오브젝트를 생성
-                    GameObject tempGameManager = GameObject.FindWithTag("GameManager");
-                    if (tempGameManager != null)
-                    {
-                        tempGameManager.gameObject.GetComponent<GameManager>().MergeObject(index, gameObject.transform.position);
-                    }
+                    gameManager.MergeObject(index, gameObject.transform.position);
                     
                     
                     Destroy(temp.gameObject);       //충돌한 물체 제거
